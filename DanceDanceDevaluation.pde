@@ -30,7 +30,7 @@ void setup()
  minim = new Minim(this);
 
  // load a file, give the AudioPlayer buffers that are 2048 samples long
- playerBackground = minim.loadFile("Background.wav", 2048);
+ playerBackground = minim.loadFile("Background0.wav", 2048);
  player1= minim.loadFile("1.wav",2048);
  player2= minim.loadFile("2.wav",2048);
  //player3 = minim.loadFile("3.wav",2048);
@@ -62,18 +62,19 @@ void serialEvent(Serial p) {
  println("Serial Event");
  buf= port.readString();
  println("Read:"+buf);
- pressureValues = parse(buf);
- playMusic();
- for (int i = 0; i < pressureValues.length; i++)
-   oldPressureValues[i] = pressureValues[i];
- //println(pressureValues);
-
+ 
+ if(buf != "")
+ {
+   pressureValues = parse(buf);
+   playMusic();
+   for (int i = 0; i < pressureValues.length; i++)
+     oldPressureValues[i] = pressureValues[i];
+   //println(pressureValues);
+ }
 }
 
 void playMusic(){
-  if (oldPressureValues[0] <=50 && pressureValues[0] > 50) {
-    playOrStop();
-  }
+  playOrStop();
   if (oldPressureValues[1] <=50 && pressureValues[1] > 50) {
     player1= minim.loadFile("1.wav",2048);
     player1.play();
@@ -88,28 +89,18 @@ void playMusic(){
 
 void playOrStop(){
 
-  if (currentTempo == STOPPED) {
-    playerBackground= minim.loadFile("Background.wav",2048);
-    playerBackground.play();
-    playerBackground.loop();
-    currentTempo = TEMPO1;
-  }
-  else if (currentTempo == TEMPO1) {
+  int diff = (oldPressureValues[0]/256) - (pressureValues[0]/256);
+  int value = pressureValues[0]/256;
+  if(diff != 0)
+  {
     playerBackground.pause();
-    playerBackground= minim.loadFile("Background.wav",2048);
-    playerBackground.play();
-    currentTempo = TEMPO2;
-  }
-  else if (currentTempo == TEMPO2) {
-    playerBackground.pause();
-    playerBackground= minim.loadFile("Background.wav",2048);
-    playerBackground.play();
-    currentTempo = TEMPO2;
-  }
-  else if(currentTempo == TEMPO3) {
-    playerBackground= minim.loadFile("Background.wav",2048);
-    playerBackground.pause();
-    currentTempo = STOPPED;
+    if(value != 0)
+    {
+      String fileName = "Background" + value + ".wav";
+      println("File to play:"+fileName);
+      playerBackground = minim.loadFile(fileName,2048);
+      playerBackground.play();
+    }
   }
 }
 
@@ -128,8 +119,7 @@ void stop()
 int[] parse(String string)
 {
   int[] intValues = new int[4];
-  String[] strValues = new String[4];
-  
+  String[] strValues = new String[4];  
   strValues = string.split(",");
   println(strValues);
   for(int i=0;i<strValues.length-1;i++)
